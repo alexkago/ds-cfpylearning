@@ -1,7 +1,9 @@
 import os
 import json
 import redis
+import importlib
 from flask import Flask, request, jsonify, abort, make_response
+from models import LinearRegression
 
 app = Flask(__name__)
 
@@ -46,11 +48,12 @@ def createModel():
     r.sadd('models', request.json.get('model_name'))
 
     # save model definition
-    request.json['status'] = 'untrained'
-    r.set(request.json.get('model_name') + '_model_definition', str(request.json))
+    request.json['training_status'] = 'untrained'
+    request.json['used_training_data'] = 0
+    r.set(request.json.get('model_name') + '_model_definition', json.dumps(request.json))
 
     # create a counter for the data
-    r.set(request.json.get('model_name') + '_data_counter',0)
+    r.set(request.json.get('model_name') + '_counter',0)
 
     # prepare output
     request.json['model_name'] = request.json.get('model_name')
@@ -73,14 +76,38 @@ def dataInput():
     if request.json.get('model_name') is None:
         abort(make_response("model_name field is missing.\n", 422))
 
+    # prepare db keys
     mdlname = request.json.get('model_name')
-    counter_key = mdlname + '_data_counter'
+    counter_key = mdlname + '_counter'
     data_key = mdlname + '_data_' + r.get(counter_key)
 
-    # save data
-    r.set(data_key, request.json)
+    # get some info about the model
+    print r.get(mdlname + '_model_definition')
+    model_def = json.loads(r.get(mdlname + '_model_definition'))
+
+    # prepare data for db
+    model_data = request.json
+    del model_data['model_name']
+
+    print r.get(counter_key)
+    print int(model_def['retrain_counter'])
+
+    # save data to redis
+    r.set(data_key, json.dumps(model_data))
     r.incr(counter_key)
-    return str(request.json) + " added at " + key + "\n", 201
+
+    # kick off re-training
+    if int(r.get(counter_key)) % int(model_def['retrain_counter']) == 0:
+    #if True:
+        data_keys = r.keys(mdlname + '_data_' + '*')
+        lr_parameters = LinearRegression.train(r.mget(data_keys))
+        print lr_parameters
+        model_def['training_status'] = 'trained'
+        model_def['used_training_data'] = int(r.get(counter_key))
+        model_def['parameters'] = json.dumps(lr_parameters)
+        r.set(mdlname + '_model_definition', json.dumps(model_def))
+
+    return json.dumps(model_data) + " added at " + data_key + "\n", 201
 
 
 # run app
