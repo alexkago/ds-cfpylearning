@@ -1,7 +1,6 @@
 import os
 import json
 import redis
-import importlib
 from flask import Flask, request, jsonify, abort, make_response
 from models import LinearRegression
 
