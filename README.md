@@ -10,16 +10,20 @@ Tests
 --
 These model creation commands should all fail, because they are missing required information.
 
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "model_type": "linear_regression_sgd"}' http://<model_domain>.cfapps.io/createModel```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_type": "linear_regression"}' http://<model_domain>.cfapps.io/createModel```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1"}' http://<model_domain>.cfapps.io/createModel```
+```
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "model_type": "linear_regression_sgd"}' http://<model_domain>.cfapps.io/createModel
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_type": "linear_regression"}' http://<model_domain>.cfapps.io/createModel
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1"}' http://<model_domain>.cfapps.io/createModel
+```
 
 
 Create a model
 --
 This should work properly:
 
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "model_type": "linear_regression", "retrain_counter": 10}' http://<model_domain>.cfapps.io/createModel```
+```
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "model_type": "linear_regression", "retrain_counter": 10}' http://<model_domain>.cfapps.io/createModel
+```
 
 
 Add in some data
@@ -27,16 +31,18 @@ Add in some data
 
 This example shows how to send data into the model created before, s.t. the linear regression model becomes y = x. Since we set the retrain_counter to 10 previously, the model will retrain after it received the 10th data instance.
 
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 1, "label": 1}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 2, "label": 2}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 3, "label": 3}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 4, "label": 4}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 5, "label": 5}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 6, "label": 6}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 7, "label": 7}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 8, "label": 8}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 9, "label": 9}' http://<model_domain>.cfapps.io/dataInput```
-```curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 10, "label": 10}' http://<model_domain>.cfapps.io/dataInput```
+```
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 1, "label": 1}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 2, "label": 2}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 3, "label": 3}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 4, "label": 4}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 5, "label": 5}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 6, "label": 6}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 7, "label": 7}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 8, "label": 8}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 9, "label": 9}' http://<model_domain>.cfapps.io/dataInput
+curl -i -X POST -H "Content-Type: application/json" -d '{"model_name": "model1", "input": 10, "label": 10}' http://<model_domain>.cfapps.io/dataInput
+```
 
 Look at all created models
 --
@@ -46,7 +52,7 @@ http://model_domain.cfapps.io/models/
 
 Look at model details
 --
-This lets you check out the status of a model as well as its trained parameters:
+This lets you check out the status of the previously created model as well as its trained parameters:
 
 http://model_domain.cfapps.io/models/model1
 
