@@ -18,8 +18,8 @@ class TestModelCreationEndpoint:
 
     def setUp(self):
         main.app.config["TESTING"] = True
+        main.connect_db()
         self.app = main.app.test_client()
-        self.r = main.r
 
     def test_missing_retrain_information(self):
         rv = self.app.post('/createModel',
@@ -45,30 +45,4 @@ class TestModelCreationEndpoint:
         assert rv.status_code == 201
 
     def tearDown(self):
-        self.r.flushall()
-#
-# class TestPredictEndpoint:
-#
-#     def setUp(self):
-#         app.config["TESTING"] = True
-#         self.app = app.test_client()
-#
-#     def test_endpoint_exists(self):
-#         rv = self.app.post('/predict/1',
-#                            data = json.dumps(dict(x=1, y=1)))
-#         self.assertEqual(rv.status_code, 200)
-#
-#     def test_json_returned(self):
-#         rv = self.app.post('/predict/1',
-#                            data = json.dumps(dict(x=1, y=1)))
-#         self.assertEqual(from_json(rv), dict(x=1, y=1, z=2))
-#
-#     def test_args_received(self):
-#         rv = self.app.post('/predict/1',
-#                            data = json.dumps(dict(x=2, y=3)))
-#         self.assertEqual(from_json(rv), dict(x=2, y=3, z=13))
-#
-#     def test_bad_args(self):
-#         rv = self.app.post('/predict/1',
-#                            data = json.dumps(dict(x="Hello", y="World")))
-#         self.assertEqual(rv.status_code, 400) #Bad Request
+        main.app.r.flushdb()
