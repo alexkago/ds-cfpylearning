@@ -1,3 +1,4 @@
+import json
 import abc
 import StandardModels
 
@@ -7,8 +8,23 @@ class ModelInterface:
         self.model_name = model_name
         self.model_type = model_type
         self.trained = False
+        self.available_data = 0
         self.used_training_data = 0
         self.retrain_counter = retrain_counter
+
+    def avail_data_incr(self):
+        self.available_data += 1
+
+    def set_data_format(self, col_names):
+        self.col_names = col_names[:]
+
+    def update_mdl_state(self):
+        self.used_training_data = self.available_data
+        self.trained = True
+
+    @abc.abstractmethod
+    def get_parameters(self):
+        """This method needs to be implemented"""
 
     @abc.abstractmethod
     def train(self, train_data):
@@ -23,7 +39,32 @@ class ModelInterface:
             and self.__dict__ == other.__dict__)
 
     def __str__(self):
-        return str(self.__dict__)
+        obj_dict = self.__dict__
+        obj_dict['parameters'] = self.get_parameters()
+        return str(obj_dict)
+
+
+def train_wrapper(func):
+    def wrapper(self, data):
+        print "train_wrapper"
+        # pre-process data
+        dict_data = [json.loads(el) for el in data]
+        col_names = dict_data[0].keys()
+
+        # run some update functions on the object
+        if not self.trained:
+            self.set_data_format(col_names)
+        else:
+            if self.col_names != col_names:
+                raise InputError('Data format is not the same as used before.')
+
+        self.update_mdl_state()
+
+        # create the actual function
+        val = func(self, dict_data, col_names)
+        return val
+
+    return wrapper
 
 
 def createModel(model_type, model_name, retrain_counter):

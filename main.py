@@ -1,10 +1,11 @@
 import os
 import json
 import redis
+import pickle
 from markdown import markdown
-from flask import Flask, request, jsonify, abort, make_response, Markup, render_template, g
-
+from flask import Flask, request, jsonify, abort, make_response, Markup, render_template
 from models.StandardModels import LinearRegression
+from models import ModelFactory
 
 app = Flask(__name__)
 
@@ -41,6 +42,12 @@ def hello():
     return render_template('index.html', **locals())
 
 
+@app.route('/flushDB')
+def flushDB():
+    app.r.flushdb()
+    return 'db flushed', 200
+
+
 @app.route('/createModel', methods=['POST'])
 def createModel():
     json_data = request.get_json(force=True)
@@ -52,24 +59,20 @@ def createModel():
     if json_data.get('model_type') is None:
         abort(make_response("model_type field is missing.\n", 422))
 
-    if json_data.get('retrain_counter') is None and json_data.get('retrain_period') is None:
+    if json_data.get('retrain_counter') is None:
         abort(make_response("no retrain information set.\n", 422))
 
     # add model to list of models
     app.r.sadd('models', json_data.get('model_name'))
 
     # save model definition
-    json_data['training_status'] = 'untrained'
-    json_data['used_training_data'] = 0
-    app.r.set(json_data.get('model_name') + '_model_definition', json.dumps(json_data))
+    mdl = ModelFactory.createModel(json_data.get('model_type'),
+                                   json_data.get('model_name'),
+                                   json_data.get('retrain_counter'))
 
-    # create a counter for the data
-    app.r.set(json_data.get('model_name') + '_counter',0)
+    app.r.set(json_data.get('model_name') + '_object', pickle.dumps(mdl))
 
-    # prepare output
-    json_data['model_name'] = json_data.get('model_name')
-
-    return jsonify({"model": str(json_data)}), 201
+    return "created model: " + str(mdl) + "\n", 201
 
 
 @app.route('/models')
@@ -79,7 +82,7 @@ def modelOverview():
 
 @app.route('/models/<model_name>')
 def modelInfo(model_name):
-    return str(app.r.get(model_name + '_model_definition')), 200
+    return str(pickle.loads(app.r.get(model_name + '_object'))), 200
 
 
 @app.route('/ingest', methods=['POST'])
@@ -91,32 +94,24 @@ def ingest():
 
     # prepare db keys
     mdlname = json_data.get('model_name')
-    counter_key = mdlname + '_counter'
-    data_key = mdlname + '_data_' + app.r.get(counter_key)
+    data_key = mdlname + '_data'
 
-    # get some info about the model
-    print app.r.get(mdlname + '_model_definition')
-    model_def = json.loads(app.r.get(mdlname + '_model_definition'))
-
-    # prepare data for db
-    del json_data['model_name']
-
-    print app.r.get(counter_key)
-    print int(model_def['retrain_counter'])
+    # get the model from the db
+    model_json = app.r.get(mdlname + '_object')
+    #print model_json
+    mdl = pickle.loads(model_json)
+    mdl.avail_data_incr()
 
     # save data to redis
-    app.r.set(data_key, json.dumps(json_data))
-    app.r.incr(counter_key)
+    del json_data['model_name']
+    app.r.rpush(data_key, json.dumps(json_data))
 
     # kick off re-training
-    if int(app.r.get(counter_key)) % int(model_def['retrain_counter']) == 0:
-        data_keys = app.r.keys(mdlname + '_data_' + '*')
-        lr_parameters = LinearRegression.train(app.r.mget(data_keys))
-        print lr_parameters
-        model_def['training_status'] = 'trained'
-        model_def['used_training_data'] = int(app.r.get(counter_key))
-        model_def['parameters'] = json.dumps(lr_parameters)
-        app.r.set(mdlname + '_model_definition', json.dumps(model_def))
+    if (mdl.available_data % mdl.retrain_counter) == 0:
+        data = app.r.lrange(data_key, 0, mdl.available_data)
+        mdl.train(data)
+
+    app.r.set(mdlname + '_object', pickle.dumps(mdl))
 
     return json.dumps(json_data) + " added at " + data_key + "\n", 201
 

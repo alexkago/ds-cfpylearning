@@ -1,24 +1,31 @@
-from ModelFactory import ModelInterface
-import numpy as np
-import json
+from ModelFactory import ModelInterface, train_wrapper
+from sklearn import linear_model
 
 class LinearRegression(ModelInterface):
     def __init__(self, name, rt_counter):
         ModelInterface.__init__(self, name, rt_counter, 'LinearRegression')
 
-    def train(self, data):
-        dict_data = [json.loads(el) for el in data]
+    @train_wrapper
+    def train(self, data, col_names):
+        print "starting model training..."
+        col_names.remove('label')
 
-        col_names = el[0].keys()
-        input_keys = col_names.remove('label')
+        x = [[el[key] for key in col_names] for el in data]
+        y = [el['label'] for el in data]
 
-        x = [[el[key] for key in input_keys] for el in dict_data]
-        y = [el['label'] for el in dict_data]
+        self.mdl = linear_model.LinearRegression()
+        self.mdl.fit(x, y, 1)
 
-        parameters = np.polyfit(x, y, 1)
-        self.parameter_dict = zip(input_keys.append['constant'], parameters)
-        
-        return parameter_dict
+        return self.get_parameters()
 
     def score(self, data):
         pass
+
+    def get_parameters(self):
+        coefficients = self.mdl.coef_.tolist()
+        coefficients.append(self.mdl.intercept_)
+
+        col_names = self.col_names[:]
+        col_names.append('constant')
+
+        return zip(col_names, coefficients)
