@@ -2,18 +2,19 @@
 
 from models import StandardModels
 from models import ModelFactory
+import unittest
 
-class TestLinearRegression:
+class TestLinearRegression(unittest.TestCase):
     def test_model_creation(self):
         model_name = 'lin_reg'
         retrain_counter = 10
         model_obj = StandardModels.LinearRegression(model_name, retrain_counter)
 
-        assert model_obj.model_name == model_name
-        assert model_obj.retrain_counter == retrain_counter
-        assert model_obj.model_type == "LinearRegression"
+        self.assertEqual(model_obj.model_name, model_name)
+        self.assertEqual(model_obj.retrain_counter, retrain_counter)
+        self.assertEqual(model_obj.model_type, "LinearRegression")
 
-class TestModelInterface:
+class TestModelInterface(unittest.TestCase):
     def test_factory_creation(self):
         model_name = 'lin_reg'
         retrain_counter = 10
@@ -22,4 +23,4 @@ class TestModelInterface:
                                               model_name,
                                               retrain_counter)
 
-        assert model_obj == model_obj2
+        self.assertEqual(model_obj, model_obj2)
