@@ -4,11 +4,11 @@ import redis
 import markdown
 from flask import Flask, request, jsonify, abort, make_response, Markup, render_template
 
-from models import LinearRegression
+from models.StandardModels import LinearRegression
 
 app = Flask(__name__)
 
-# set up redis service, port and debug flag
+# set up redis service, port and debug flag for local and CF deployment
 # check if we're running locally by checking for env variable
 if os.environ.get('VCAP_SERVICES') is None:
     # run locally
@@ -43,31 +43,32 @@ def hello():
 
 @app.route('/createModel', methods=['POST'])
 def createModel():
+    json_data = request.get_json(force=True)
     # check if all fields are there
-    if request.json.get('model_name') is None:
+    if json_data.get('model_name') is None:
         abort(make_response("model_name field is missing.\n", 422))
 
-    if request.json.get('model_type') is None:
+    if json_data.get('model_type') is None:
         abort(make_response("model_type field is missing.\n", 422))
 
-    if request.json.get('retrain_counter') is None and request.json.get('retrain_period') is None:
+    if json_data.get('retrain_counter') is None and json_data.get('retrain_period') is None:
         abort(make_response("no retrain information set.\n", 422))
 
     # add model to list of models
-    r.sadd('models', request.json.get('model_name'))
+    r.sadd('models', json_data.get('model_name'))
 
     # save model definition
-    request.json['training_status'] = 'untrained'
-    request.json['used_training_data'] = 0
-    r.set(request.json.get('model_name') + '_model_definition', json.dumps(request.json))
+    json_data['training_status'] = 'untrained'
+    json_data['used_training_data'] = 0
+    r.set(json_data.get('model_name') + '_model_definition', json.dumps(json_data))
 
     # create a counter for the data
-    r.set(request.json.get('model_name') + '_counter',0)
+    r.set(json_data.get('model_name') + '_counter',0)
 
     # prepare output
-    request.json['model_name'] = request.json.get('model_name')
+    json_data['model_name'] = json_data.get('model_name')
 
-    return jsonify({"model": str(request.json)}), 201
+    return jsonify({"model": str(json_data)}), 201
 
 
 @app.route('/models')
@@ -82,11 +83,12 @@ def modelInfo(model_name):
 
 @app.route('/ingest', methods=['POST'])
 def ingest():
-    if request.json.get('model_name') is None:
+    json_data = request.get_json(force=True)
+    if json_data.get('model_name') is None:
         abort(make_response("model_name field is missing.\n", 422))
 
     # prepare db keys
-    mdlname = request.json.get('model_name')
+    mdlname = json_data.get('model_name')
     counter_key = mdlname + '_counter'
     data_key = mdlname + '_data_' + r.get(counter_key)
 
@@ -95,14 +97,13 @@ def ingest():
     model_def = json.loads(r.get(mdlname + '_model_definition'))
 
     # prepare data for db
-    model_data = request.json
-    del model_data['model_name']
+    del json_data['model_name']
 
     print r.get(counter_key)
     print int(model_def['retrain_counter'])
 
     # save data to redis
-    r.set(data_key, json.dumps(model_data))
+    r.set(data_key, json.dumps(json_data))
     r.incr(counter_key)
 
     # kick off re-training
@@ -115,7 +116,7 @@ def ingest():
         model_def['parameters'] = json.dumps(lr_parameters)
         r.set(mdlname + '_model_definition', json.dumps(model_def))
 
-    return json.dumps(model_data) + " added at " + data_key + "\n", 201
+    return json.dumps(json_data) + " added at " + data_key + "\n", 201
 
 
 # run app
