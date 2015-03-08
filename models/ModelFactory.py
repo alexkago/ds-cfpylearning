@@ -22,6 +22,9 @@ class ModelInterface:
         return (isinstance(other, self.__class__)
             and self.__dict__ == other.__dict__)
 
+    def __str__(self):
+        return str(self.__dict__)
+
 
 def createModel(model_type, model_name, retrain_counter):
     return getattr(StandardModels, model_type)(model_name, retrain_counter)
