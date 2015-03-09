@@ -16,7 +16,7 @@ class TestLinearRegressionEndPoint(unittest.TestCase):
                                          "model_type": "LinearRegression",
                                          "retrain_counter": 10}))
 
-    def test_no_label_available(self):
+    def test_data_no_label_available(self):
         pass #TODO
 
     def test_training(self):

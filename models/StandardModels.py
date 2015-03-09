@@ -25,6 +25,7 @@ class LinearRegression(ModelInterface):
         coefficients.append(self.mdl.intercept_)
 
         col_names = self.col_names[:]
+        col_names.remove('label')
         col_names.append('constant')
 
-        return zip(col_names, coefficients)
+        return dict(zip(col_names, coefficients))

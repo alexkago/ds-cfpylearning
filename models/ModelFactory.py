@@ -1,6 +1,5 @@
 import json
 import abc
-import StandardModels
 
 class ModelInterface:
     __metaclass__  = abc.ABCMeta
@@ -58,10 +57,12 @@ def train_wrapper(func):
             if self.col_names != col_names:
                 raise InputError('Data format is not the same as used before.')
 
-        self.update_mdl_state()
-
-        # create the actual function
+        # run the actual training function
         val = func(self, dict_data, col_names)
+
+        # update the model state
+        self.update_mdl_state()
+        
         return val
 
     return wrapper
@@ -69,6 +70,11 @@ def train_wrapper(func):
 
 def createModel(model_type, model_name, retrain_counter):
     try:
+        import StandardModels
         return getattr(StandardModels, model_type)(model_name, retrain_counter)
     except:
-        return None
+        try:
+            import CustomModels
+            return getattr(CustomModels, model_type)(model_name, retrain_counter)
+        except:
+            return None
