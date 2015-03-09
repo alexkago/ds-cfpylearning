@@ -1,0 +1,9 @@
+---
+applications:
+- name: dsoncf
+  memory: 512M
+  instances: 1
+  host: dsoncf
+  domain: cfapps.io
+  path: .
+  command: .conda/bin/python main.py
