@@ -40,7 +40,8 @@ class ModelInterface:
 
     def __str__(self):
         obj_dict = self.__dict__
-        obj_dict['parameters'] = self.get_parameters()
+        if self.trained:
+            obj_dict['parameters'] = self.get_parameters()
         return str(obj_dict)
 
 
