@@ -68,4 +68,7 @@ def train_wrapper(func):
 
 
 def createModel(model_type, model_name, retrain_counter):
-    return getattr(StandardModels, model_type)(model_name, retrain_counter)
+    try:
+        return getattr(StandardModels, model_type)(model_name, retrain_counter)
+    except:
+        return None

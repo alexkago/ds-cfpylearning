@@ -47,7 +47,11 @@ class TestModelCreationEndpoint(unittest.TestCase):
         self.assertEqual(rv.status_code, 201)
 
     def test_non_defined_model(self):
-        pass #TODO
+        rv = self.app.post('/createModel',
+                           data = json.dumps({"model_name": "test_model1",
+                                              "model_type": "SuperDuperModel",
+                                              "retrain_counter": 10}))
+        self.assertEqual(rv.status_code, 422)
 
     def tearDown(self):
         main.app.r.flushdb()

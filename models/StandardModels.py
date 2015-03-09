@@ -18,7 +18,7 @@ class LinearRegression(ModelInterface):
         return self.get_parameters()
 
     def score(self, data):
-        pass
+        return self.mdl.predict(data)
 
     def get_parameters(self):
         coefficients = self.mdl.coef_.tolist()

@@ -70,6 +70,11 @@ def createModel():
                                    json_data.get('model_name'),
                                    json_data.get('retrain_counter'))
 
+    if mdl is None:
+        return abort(make_response("No model available of type " +
+                                   json_data.get('model_type') + "\n",
+                     422))
+
     app.r.set(json_data.get('model_name') + '_object', pickle.dumps(mdl))
 
     return "created model: " + str(mdl) + "\n", 201
@@ -93,17 +98,27 @@ def ingest():
         abort(make_response("model_name field is missing.\n", 422))
 
     # prepare db keys
-    mdlname = json_data.get('model_name')
-    data_key = mdlname + '_data'
+    mdl_key = json_data.get('model_name') + '_object'
+    data_key = json_data.get('model_name') + '_data'
 
     # get the model from the db
-    model_json = app.r.get(mdlname + '_object')
-    #print model_json
-    mdl = pickle.loads(model_json)
+    pickled_mdl = app.r.get(mdl_key)
+    mdl = pickle.loads(pickled_mdl)
+
+    # pre-process data
+    del json_data['model_name']
+    col_names = json_data.keys()
+
+    # update the model
+    if mdl.available_data == 0:
+        mdl.set_data_format(col_names)
+    else:
+        if mdl.col_names != col_names:
+            return abort(make_response("Data format changed!\n", 422))
+
     mdl.avail_data_incr()
 
     # save data to redis
-    del json_data['model_name']
     app.r.rpush(data_key, json.dumps(json_data))
 
     # kick off re-training
@@ -111,10 +126,29 @@ def ingest():
         data = app.r.lrange(data_key, 0, mdl.available_data)
         mdl.train(data)
 
-    app.r.set(mdlname + '_object', pickle.dumps(mdl))
+    # save model file
+    app.r.set(mdl_key, pickle.dumps(mdl))
 
     return json.dumps(json_data) + " added at " + data_key + "\n", 201
 
+@app.route('/score', methods=['POST'])
+def score():
+    json_data = request.get_json(force=True)
+
+    if json_data.get('model_name') is None:
+        abort(make_response("model_name field is missing.\n", 422))
+
+    # prepare db keys
+    mdl_key = json_data.get('model_name') + '_object'
+    pickled_mdl = app.r.get(mdl_key)
+    mdl = pickle.loads(pickled_mdl)
+
+    del json_data['model_name']
+    del json_data['label']
+
+    prediction = mdl.score(json_data)
+
+    return json.dumps(prediction), 201
 
 # run app
 if __name__ == "__main__":
