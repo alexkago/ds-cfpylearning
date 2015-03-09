@@ -143,10 +143,20 @@ def score():
     pickled_mdl = app.r.get(mdl_key)
     mdl = pickle.loads(pickled_mdl)
 
-    del json_data['model_name']
-    del json_data['label']
+    if not mdl.trained:
+        return abort(make_response("Model has not been trained yet!\n", 404))
 
-    prediction = mdl.score(json_data)
+    train_data = dict(json_data)
+    del train_data['model_name']
+    input_keys = mdl.col_names[:]
+    input_keys.remove('label')
+
+    if input_keys != train_data.keys():
+        return abort(make_response("Data format for training is different!\n", 422))
+
+    pred_val = mdl.score([train_data[key] for key in input_keys])
+
+    prediction = {'predicted_label': pred_val, 'request': json_data}
 
     return json.dumps(prediction), 201
 

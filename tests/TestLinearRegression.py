@@ -16,6 +16,9 @@ class TestLinearRegressionEndPoint(unittest.TestCase):
                                          "model_type": "LinearRegression",
                                          "retrain_counter": 10}))
 
+    def test_no_label_available(self):
+        pass #TODO
+
     def test_training(self):
         for i in range(1,11):
             self.app.post('/ingest',
@@ -100,6 +103,42 @@ class TestLinearRegressionEndPoint(unittest.TestCase):
                                               "foo": 1}))
 
         self.assertEqual(rv.status_code, 422)
+
+    def test_scoring_untrained(self):
+        rv = self.app.post('/score',
+                           data = json.dumps({"model_name": "test_model1",
+                                              "input": 5}))
+
+        self.assertEqual(rv.status_code, 404)
+
+    def test_scoring_wrong_data(self):
+        for i in range(1,11):
+            self.app.post('/ingest',
+                          data = json.dumps({"model_name": "test_model1",
+                                             "input": i,
+                                             "label": i}))
+
+        rv = self.app.post('/score',
+                           data = json.dumps({"model_name": "test_model1",
+                                              "input_foo_bar": 5}))
+
+        self.assertEqual(rv.status_code, 422)
+
+    def test_scoring(self):
+        for i in range(1,11):
+            self.app.post('/ingest',
+                          data = json.dumps({"model_name": "test_model1",
+                                             "input": i,
+                                             "label": i}))
+
+        rv = self.app.post('/score',
+                           data = json.dumps({"model_name": "test_model1",
+                                              "input": 5}))
+
+        response = json.loads(rv.data)
+        self.assertEqual(response, {"request": {"input": 5,
+                                                "model_name": "test_model1"},
+                                    "predicted_label": 5.0})
 
     def tearDown(self):
         main.app.r.flushdb()
