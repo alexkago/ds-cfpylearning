@@ -47,7 +47,6 @@ class ModelInterface:
 
 def train_wrapper(func):
     def wrapper(self, data):
-        print "train_wrapper"
         # pre-process data
         dict_data = [json.loads(el) for el in data]
         col_names = dict_data[0].keys()

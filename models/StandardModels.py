@@ -7,7 +7,6 @@ class LinearRegression(ModelInterface):
 
     @train_wrapper
     def train(self, data, col_names):
-        print "starting model training..."
         col_names.remove('label')
 
         x = [[el[key] for key in col_names] for el in data]

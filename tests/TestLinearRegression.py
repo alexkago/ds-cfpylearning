@@ -3,8 +3,6 @@ import main
 import json
 import pickle
 from models import StandardModels
-# from models import ModelFactory
-# from sklearn import linear_model
 
 
 class TestLinearRegressionEndPoint(unittest.TestCase):
@@ -18,42 +16,42 @@ class TestLinearRegressionEndPoint(unittest.TestCase):
                                          "model_type": "LinearRegression",
                                          "retrain_counter": 10}))
 
-    def test_linear_regression_training(self):
+    def test_training(self):
         for i in range(1,11):
             self.app.post('/ingest',
                           data = json.dumps({"model_name": "test_model1",
                                              "input": i,
                                              "label": i}))
-        rv = self.app.get('/models/test_model1')
-        mdl = pickle.loads(rv.data)
+        pickled_mdl = main.app.r.get('test_model1_object')
+        mdl = pickle.loads(pickled_mdl)
 
         self.assertEqual(mdl.trained, True)
         self.assertEqual(mdl.available_data, 10)
         self.assertEqual(mdl.used_training_data, 10)
         self.assertEqual(mdl.col_names, ['input', 'label'])
 
-    def test_linear_regression_training_with_added_data(self):
+    def test_training_with_added_data(self):
         for i in range(1,16):
             self.app.post('/ingest',
                           data = json.dumps({"model_name": "test_model1",
                                              "input": i,
                                              "label": i}))
-        rv = self.app.get('/models/test_model1')
-        mdl = pickle.loads(rv.data)
+        pickled_mdl = main.app.r.get('test_model1_object')
+        mdl = pickle.loads(pickled_mdl)
 
         self.assertEqual(mdl.trained, True)
         self.assertEqual(mdl.available_data, 15)
         self.assertEqual(mdl.used_training_data, 10)
         self.assertEqual(mdl.col_names, ['input', 'label'])
 
-    def test_linear_regression_object_equality(self):
+    def test_object_equality(self):
         for i in range(1,11):
             self.app.post('/ingest',
                           data = json.dumps({"model_name": "test_model1",
                                              "input": i,
                                              "label": i}))
-        rv = self.app.get('/models/test_model1')
-        mdl = pickle.loads(rv.data)
+        pickled_mdl = main.app.r.get('test_model1_object')
+        mdl = pickle.loads(pickled_mdl)
 
         # compare to manually created object
         model_name = 'test_model1'
@@ -80,14 +78,14 @@ class TestLinearRegressionEndPoint(unittest.TestCase):
         del model_obj.mdl
         self.assertEqual(model_obj, mdl)
 
-    def test_linear_regression_model_name_missing(self):
+    def test_model_name_missing(self):
         rv = self.app.post('/ingest',
                            data = json.dumps({"input": 1,
                                               "label": 1}))
 
         self.assertEqual(rv.status_code, 422)
 
-    def test_linear_regression_wrong_data_format(self):
+    def test_wrong_data_format(self):
         rv = self.app.post('/ingest',
                            data = json.dumps({"model_name": "test_model1",
                                               "input": 1,
