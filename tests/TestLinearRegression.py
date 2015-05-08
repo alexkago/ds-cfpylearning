@@ -60,6 +60,7 @@ class TestLinearRegressionEndPoint(unittest.TestCase):
         model_name = 'test_model1'
         retrain_counter = 10
         model_obj = StandardModels.LinearRegression(model_name, retrain_counter)
+        model_obj.set_data_format(['input', 'label'])
 
         for i in range(0,10):
             model_obj.avail_data_incr()

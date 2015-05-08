@@ -15,7 +15,7 @@ class ModelInterface:
         self.available_data += 1
 
     def set_data_format(self, col_names):
-        self.col_names = col_names[:]
+        self.col_names = col_names
 
     def update_mdl_state(self):
         self.used_training_data = self.available_data
@@ -50,19 +50,19 @@ def train_wrapper(func):
         dict_data = [json.loads(el) for el in data]
         col_names = dict_data[0].keys()
 
-        # run some update functions on the object
-        if not self.trained:
-            self.set_data_format(col_names)
-        else:
-            if self.col_names != col_names:
-                raise InputError('Data format is not the same as used before.')
+        # # run some update functions on the object
+        # if not self.trained:
+        #     self.set_data_format(col_names)
+        # else:
+        #     if self.col_names != col_names:
+        #         raise InputError('Data format is not the same as used before.')
 
         # run the actual training function
         val = func(self, dict_data, col_names)
 
         # update the model state
         self.update_mdl_state()
-        
+
         return val
 
     return wrapper

@@ -28,10 +28,11 @@ class DataSender:
         while True:
             print "sending data"
             x = np.random.uniform(low=-5, high=5)
-            self.app.post('/ingest',
-                          data = json.dumps({"model_name": "test_model1",
-                                             "input": x,
-                                             "label": self.data_generator(x)}))
+            json_data = json.dumps({"model_name": "test_model1",
+                               "input": x,
+                               "label": self.data_generator(x)})
+            print json_data
+            self.app.post('/ingest', data = json_data)
             time.sleep(0.2)
 
     def data_generator(self,x):

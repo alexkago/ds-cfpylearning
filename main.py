@@ -148,7 +148,7 @@ def score():
 
     train_data = dict(json_data)
     del train_data['model_name']
-    input_keys = mdl.col_names[:]
+    input_keys = mdl.col_names
     input_keys.remove('label')
 
     if input_keys != train_data.keys():

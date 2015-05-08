@@ -24,8 +24,6 @@ class TestOnlineLinearRegressionEndPoint(unittest.TestCase):
         pickled_mdl = main.app.r.get('test_model1_object')
         mdl = pickle.loads(pickled_mdl)
 
-        print mdl
-
         self.assertEqual(mdl.trained, True)
         self.assertEqual(mdl.available_data, 10)
         self.assertEqual(mdl.used_training_data, 10)
